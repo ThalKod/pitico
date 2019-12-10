@@ -21,7 +21,8 @@ const Create = ({ history }) => {
     tokenSymbol: "",
     documentHash: "",
     documentUri: "",
-    amount: ""
+    amount: "",
+    decimals: ""
   });
 
   async function handleCreateToken() {
@@ -30,12 +31,18 @@ const Create = ({ history }) => {
       dirty: false
     });
 
-    if (!data.tokenName || !data.tokenSymbol || !data.amount || Number(data.amount) <= 0) {
+    if (
+      !data.tokenName ||
+      !data.tokenSymbol ||
+      !data.amount ||
+      Number(data.amount) <= 0 ||
+      !isInteger(Number(data.decimals))
+    ) {
       return;
     }
 
     setLoading(true);
-    const { tokenName, tokenSymbol, documentHash, documentUri, amount } = data;
+    const { tokenName, tokenSymbol, documentHash, documentUri, amount, decimals } = data;
     try {
       const docUri = documentUri || "pitico.cash";
       const link = await createToken(wallet, {
@@ -43,7 +50,8 @@ const Create = ({ history }) => {
         symbol: tokenSymbol,
         documentHash,
         docUri,
-        initialTokenQty: amount
+        initialTokenQty: amount,
+        decimals
       });
 
       notification.success({
@@ -77,6 +85,10 @@ const Create = ({ history }) => {
       setLoading(false);
     }
   }
+
+  const isInteger = number => {
+    return number === parseInt(number, 10);
+  };
 
   const handleChange = e => {
     const { value, name } = e.target;
@@ -150,7 +162,7 @@ const Create = ({ history }) => {
               </Form.Item>
               <Form.Item>
                 <Input
-                  placeholder="token website e.g.: pitico.cash"
+                  placeholder="token url e.g.: pitico.cash"
                   name="documentUri"
                   onChange={e => handleChange(e)}
                   required
@@ -163,6 +175,20 @@ const Create = ({ history }) => {
                 <Input
                   placeholder="quantity"
                   name="amount"
+                  onChange={e => handleChange(e)}
+                  required
+                  type="number"
+                />
+              </Form.Item>
+              <Form.Item
+                validateStatus={!data.dirty && Number(data.amount) < 0 ? "error" : ""}
+                help={
+                  !data.dirty && !isInteger(Number(data.decimals)) ? "Should be an integer" : ""
+                }
+              >
+                <Input
+                  placeholder="decimals"
+                  name="decimals"
                   onChange={e => handleChange(e)}
                   required
                   type="number"
